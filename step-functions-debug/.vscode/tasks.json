@@ -1,0 +1,50 @@
+{
+  // See https://go.microsoft.com/fwlink/?LinkId=733558
+  // for the documentation about the tasks.json format
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "kill-sam-instances",
+      "type": "shell",
+      "command": "kill $(ps aux | grep '[/]bin/bash .*/start_functions.sh' | awk '$1 { print $2 }')",
+      "isBackground": false,
+    },
+    {
+      "label": "start-state-machine",
+      "type": "shell",
+      "command": "${workspaceRoot}/statemachine/start.sh",
+      "isBackground": false,
+      "problemMatcher": {
+				"owner": "custom",
+				"pattern": { "regexp": "__________" },
+				"background": {
+					"activeOnStart": true,
+					"beginsPattern": "^Starting StepFunctions Process\\.\\.\\.$",
+					"endsPattern": "^.+Running on http://.+$"
+				}
+			}
+    },
+    {
+      "label": "start-stock-checker-function",
+      "type": "shell",
+      "command": "${workspaceRoot}/functions/start_functions.sh StockChecker",
+      "isBackground": true,
+      "problemMatcher": {
+				"owner": "custom",
+				"pattern": { "regexp": "__________" },
+				"background": {
+					"activeOnStart": true,
+					"beginsPattern": "^Starting Lambda Function Host\\.\\.\\.$",
+					"endsPattern": "^.+Running on http://.+$"
+				}
+			}
+    },
+    {
+        "label": "start-stock-checker",
+        "dependsOn": [
+            "start-stock-checker-function",
+            "start-state-machine"
+        ]
+    }
+  ]
+}
