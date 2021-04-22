@@ -16,5 +16,5 @@ statemachine=$(envsubst < ${exdir}/stock_trader.asl.json)
 sleep 2
 
 aws stepfunctions --endpoint http://localhost:8083 create-state-machine --definition "$statemachine" --name stock-trader --role-arn "arn:aws:iam::012345678901:role/DummyRole"
-UUID=uuidgen
+UUID=$(uuidgen)
 aws stepfunctions --endpoint http://localhost:8083 start-execution --state-machine arn:aws:states:us-east-1:012345678901:stateMachine:stock-trader --name debug_$UUID
