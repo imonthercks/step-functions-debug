@@ -5,24 +5,28 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "Start Function",
-      "type": "node-terminal",
-      "request": "launch",
-      "preLaunchTask": "start-function",
-      "command": "echo $DEBUG_FUNCTION"
-    },
-    {
-      "name": "Attach Debugger to StockChecker",
+      "name": "Debug function",
       "type": "node",
       "request": "attach",
       "address": "localhost",
       "port": 5890,
-      "localRoot": "${workspaceRoot}/functions/StockChecker",
+      "localRoot": "${workspaceRoot}/functions/${input:function}",
       "remoteRoot": "/var/task",
       "protocol": "inspector",
       "stopOnEntry": false,
-      "preLaunchTask": "start-stock-checker",
-      "postDebugTask": "kill-sam-instances"
+      "preLaunchTask": "Start-${input:function}Function"
+    }
+  ],
+  "inputs": [
+    {
+      "type": "pickString",
+      "id": "function",
+      "description": "Lambda Function to debug",
+      "options": [
+        "StockChecker",
+        "StockBuyer",
+        "StockSeller"
+      ]
     }
   ]
 }

@@ -14,8 +14,6 @@ Resources:
         StockCheckerFunctionArn: !GetAtt StockCheckerFunction.Arn
         StockSellerFunctionArn: !GetAtt StockSellerFunction.Arn
         StockBuyerFunctionArn: !GetAtt StockBuyerFunction.Arn
-        DDBPutItem: !Sub arn:${AWS::Partition}:states:::dynamodb:putItem
-        DDBTable: !Ref TransactionTable
       Events:
         HourlyTradingSchedule:
           Type: Schedule # More info about Schedule Event Source: https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/sam-property-statemachine-schedule.html
@@ -30,8 +28,8 @@ Resources:
             FunctionName: !Ref StockSellerFunction
         - LambdaInvokePolicy:
             FunctionName: !Ref StockBuyerFunction
-        - DynamoDBWritePolicy:
-            TableName: !Ref TransactionTable
+      Tracing: 
+        Enabled: True
 
   StockCheckerFunction:
     Type: AWS::Serverless::Function # More info about Function Resource: https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/sam-resource-function.html
@@ -39,6 +37,13 @@ Resources:
       CodeUri: functions/StockChecker/
       Handler: app.lambdaHandler
       Runtime: nodejs14.x
+      Layers: 
+        - arn:aws:lambda:us-east-1:858558912218:layer:otel-collector:3
+        - arn:aws:lambda:us-east-1:858558912218:layer:otel-node:2
+      Environment:
+        Variables:
+          OPENTELEMETRY_COLLECTOR_CONFIG_FILE: /var/task/collector.yaml
+          AWS_LAMBDA_EXEC_WRAPPER: /opt/otel-handler
 
   StockSellerFunction:
     Type: AWS::Serverless::Function
@@ -54,15 +59,20 @@ Resources:
       Handler: app.lambdaHandler
       Runtime: nodejs14.x
 
-  TransactionTable:
-    Type: AWS::Serverless::SimpleTable # More info about SimpleTable Resource: https://docs.aws.amazon.com/serverless-application-model/latest/developerguide/sam-resource-simpletable.html
-    Properties:
-      PrimaryKey:
-        Name: Id
-        Type: String
-      ProvisionedThroughput:
-        ReadCapacityUnits: 1
-        WriteCapacityUnits: 1
+  # TriggerFunction:
+  #   Type: AWS::Serverless::Function
+  #   Properties:
+  #     CodeUri: functions/Trigger/
+  #     Handler: app.lambdaHandler
+  #     Runtime: nodejs14.x
+  #     Layers: 
+  #       - arn:aws:lambda:us-east-1:858558912218:layer:otel-collector:3
+  #       - arn:aws:lambda:us-east-1:858558912218:layer:otel-node:1
+  #     Environment:
+  #       Variables:
+  #         STATE_MACHINE_ARN: !Ref StockTradingStateMachine
+  #         OPENTELEMETRY_COLLECTOR_CONFIG_FILE: /var/task/collector.yaml
+  #         AWS_LAMBDA_EXEC_WRAPPER: /opt/otel-handler
 
 Outputs:
   # StockTradingStateMachineHourlyTradingSchedule is an implicit Schedule event rule created out of Events key under Serverless::StateMachine
